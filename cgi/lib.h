@@ -63,4 +63,9 @@ int add_note(const char *user_id, const char *note);
 
 void view_notes(const char *user_id);
 
+/**
+ * understand how web work
+ */
+void print_request_info(void);
+
 #endif

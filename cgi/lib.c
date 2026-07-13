@@ -54,3 +54,59 @@ int add_note(const char *user_id, const char *note)
 void view_notes(const char *user_id)
 {
 }
+
+/**
+ * Here we try to understand how web work
+ * 
+ */
+/*
+    +---------------------+
+    |      HTML Form      |
+    +---------------------+
+              |
+              V
+      username = raphael
+      password = 1234
+              |
+              V
+        Browser creates
+
+    username=raphael&password=1234
+              |
+              V
+           Apache
+              |
+      CONTENT_LENGTH = 31
+              |
+              V
+            stdin
+              |
+              V
+      private_note.cgi
+              |
+         fread(...)
+              |
+              V
+            buffer
+              |
+         printf(...)
+              |
+              V
+           Browser
+*/
+
+void print_request_info()
+{
+    printf("<h2>Request Information</h2>");
+
+    printf("REQUEST_METHOD : %s<br>",
+           getenv("REQUEST_METHOD"));
+
+    printf("CONTENT_LENGTH : %s<br>",
+           getenv("CONTENT_LENGTH"));
+
+    printf("CONTENT_TYPE : %s<br>",
+           getenv("CONTENT_TYPE"));
+
+    printf("<hr>");
+}

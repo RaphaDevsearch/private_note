@@ -11,9 +11,7 @@ int main(void)
 
   printf("<body>");
 
-  printf("<h1>Private Notes</h1>");
-
-  printf("<p>CGI is running successfully.</p>");
+  print_request_info();
 
   printf("</body>");
   printf("</html>");
