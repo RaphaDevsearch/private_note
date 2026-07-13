@@ -1,11 +1,983 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>private note</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Notes — a small CGI project about privacy</title>
+<meta name="description" content="A CGI application demonstrating authentication and data privacy using HTML, C, Apache, and CSV files.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --paper: #EDE7D6;
+    --paper-2: #E2D9C1;
+    --paper-3: #D8CDAE;
+    --ink: #221D13;
+    --ink-soft: #5B5540;
+    --line: #B9AC85;
+    --amber: #B96A1E;
+    --amber-strong: #96521A;
+    --stamp: #9C3B2C;
+    --terminal-bg: #17140D;
+    --terminal-fg: #EDE3C6;
+    --terminal-dim: #9C9376;
+    --terminal-amber: #E7A23C;
+    --terminal-line: #38311F;
+    --ok: #4B7A3E;
+    --no: #9C3B2C;
+    --radius: 3px;
+    --shadow: 0 1px 0 rgba(34,29,19,0.08);
+    --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  html[data-theme="dark"]{
+    --paper: #15130C;
+    --paper-2: #1C1810;
+    --paper-3: #241F14;
+    --ink: #EDE3C6;
+    --ink-soft: #B3A987;
+    --line: #3A331F;
+    --amber: #E7A23C;
+    --amber-strong: #F0B563;
+    --stamp: #D2705B;
+    --terminal-bg: #0E0C08;
+    --terminal-fg: #EDE3C6;
+    --terminal-dim: #8A8264;
+    --terminal-amber: #E7A23C;
+    --terminal-line: #2A2415;
+    --shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    line-height:1.55;
+    transition:background .3s ease, color .3s ease;
+  }
+
+  h1,h2,h3,.mono{ font-family:var(--font-mono); }
+  a{ color:inherit; }
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:0.78rem;
+    letter-spacing:0.06em;
+    color:var(--amber);
+    text-transform:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{ content:"$"; color:var(--ink-soft); }
+
+  .section-title{
+    font-size:clamp(1.5rem, 2.4vw, 2.1rem);
+    font-weight:700;
+    letter-spacing:-0.01em;
+    margin:10px 0 14px;
+  }
+  .section-lede{
+    color:var(--ink-soft);
+    font-size:1.02rem;
+    max-width:640px;
+    margin:0 0 40px;
+  }
+
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.is-visible{ opacity:1; transform:none; }
+
+  /* ============ HEADER / NAV ============ */
+  header{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:100;
+    background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1080px;
+    margin:0 auto;
+    padding:14px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .logo{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:0.98rem;
+    letter-spacing:-0.02em;
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+  .logo::before{ content:"$ "; color:var(--amber); }
+  .logo .cursor{
+    display:inline-block;
+    width:8px; height:1.1em;
+    background:var(--amber);
+    margin-left:6px;
+    animation:blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  nav.links{ display:flex; align-items:center; gap:28px; }
+  nav.links a{
+    text-decoration:none;
+    font-size:0.92rem;
+    color:var(--ink-soft);
+    position:relative;
+    padding:4px 0;
+  }
+  nav.links a.nav-link.active,
+  nav.links a.nav-link:hover{ color:var(--ink); }
+  nav.links a.nav-link.active::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:-2px;
+    height:2px;
+    background:var(--amber);
+  }
+  .btn-login{
+    font-family:var(--font-mono);
+    font-size:0.86rem;
+    background:var(--ink);
+    color:var(--paper);
+    padding:8px 16px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    border:1px solid var(--ink);
+  }
+  html[data-theme="dark"] .btn-login{ background:var(--terminal-amber); color:var(--terminal-bg); border-color:var(--terminal-amber); }
+  .btn-login:hover{ opacity:0.85; }
+
+  .theme-toggle{
+    font-family:var(--font-mono);
+    font-size:0.78rem;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    padding:6px 10px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    margin-left:14px;
+  }
+  .theme-toggle:hover{ border-color:var(--amber); color:var(--amber); }
+
+  .hamburger{
+    display:none;
+    flex-direction:column;
+    gap:4px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:6px;
+  }
+  .hamburger span{ width:20px; height:2px; background:var(--ink); display:block; }
+
+  /* ============ HERO ============ */
+  .hero{
+    padding:168px 0 96px;
+    position:relative;
+  }
+  .hero-grid{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:34px 34px;
+    position:absolute;
+    inset:0;
+    opacity:0.22;
+    mask-image:linear-gradient(to bottom, black, transparent 85%);
+    pointer-events:none;
+  }
+  .hero-inner{ position:relative; max-width:720px; }
+  .hero h1{
+    font-size:clamp(2.1rem, 5vw, 3.4rem);
+    line-height:1.08;
+    font-weight:800;
+    letter-spacing:-0.02em;
+    margin:16px 0 18px;
+  }
+  .hero h1 .amber{ color:var(--amber); }
+  .hero p.lede{
+    font-size:1.1rem;
+    color:var(--ink-soft);
+    max-width:520px;
+    margin:0 0 32px;
+  }
+  .hero-actions{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .btn-primary{
+    font-family:var(--font-mono);
+    background:var(--ink);
+    color:var(--paper);
+    padding:13px 24px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    font-size:0.94rem;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  html[data-theme="dark"] .btn-primary{ background:var(--terminal-amber); color:var(--terminal-bg); }
+  .btn-primary:hover{ transform:translateY(-1px); }
+  .link-ghost{
+    font-family:var(--font-mono);
+    font-size:0.9rem;
+    color:var(--ink-soft);
+    text-decoration:none;
+    border-bottom:1px dashed var(--line);
+    padding-bottom:2px;
+  }
+  .link-ghost:hover{ color:var(--amber); border-color:var(--amber); }
+
+  /* ============ EXAMPLE (terminal windows) ============ */
+  .example{ padding:80px 0; border-top:1px solid var(--line); }
+  .term-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:22px;
+    margin-bottom:26px;
+  }
+  .term{
+    background:var(--terminal-bg);
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  }
+  .term-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:color-mix(in srgb, var(--terminal-bg) 80%, white 6%);
+    border-bottom:1px solid var(--terminal-line);
+  }
+  .term-dot{ width:9px; height:9px; border-radius:50%; }
+  .term-dot.r{ background:#C9564B; }
+  .term-dot.y{ background:#D9A441; }
+  .term-dot.g{ background:#6B9C55; }
+  .term-title{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    color:var(--terminal-dim);
+    margin-left:6px;
+  }
+  .term-body{
+    padding:18px 18px 22px;
+    font-family:var(--font-mono);
+    font-size:0.88rem;
+    color:var(--terminal-fg);
+  }
+  .term-prompt{ color:var(--terminal-amber); }
+  .term-body ul{ margin:10px 0 0; padding-left:0; list-style:none; }
+  .term-body li{ padding:4px 0; color:var(--terminal-fg); }
+  .term-body li::before{ content:"• "; color:var(--terminal-amber); }
+
+  .example-note{
+    font-family:var(--font-mono);
+    font-size:0.92rem;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:16px 0 0;
+  }
+  .example-note strong{ color:var(--ink); }
+
+  /* ============ HOW IT WORKS (terminal band) ============ */
+  .how{
+    background:var(--terminal-bg);
+    color:var(--terminal-fg);
+    padding:88px 0 96px;
+  }
+  .how .eyebrow{ color:var(--terminal-amber); }
+  .how .eyebrow::before{ color:var(--terminal-dim); }
+  .how .section-title{ color:var(--terminal-fg); }
+  .how .section-lede{ color:var(--terminal-dim); }
+
+  .flow{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+    margin:48px 0 56px;
+    font-family:var(--font-mono);
+  }
+  .flow-node{
+    border:1px solid var(--terminal-line);
+    background:color-mix(in srgb, var(--terminal-bg) 70%, white 4%);
+    padding:12px 22px;
+    border-radius:4px;
+    font-size:0.88rem;
+    color:var(--terminal-fg);
+    text-align:center;
+    min-width:180px;
+  }
+  .flow-node.hot{ border-color:var(--terminal-amber); color:var(--terminal-amber); }
+  .flow-arrow{
+    color:var(--terminal-dim);
+    font-size:1rem;
+    line-height:1;
+    padding:6px 0;
+  }
+
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));
+    gap:22px;
+    margin-bottom:60px;
+  }
+  .step{
+    border-left:2px solid var(--terminal-line);
+    padding:4px 0 4px 18px;
+  }
+  .step-num{
+    font-family:var(--font-mono);
+    font-size:0.76rem;
+    color:var(--terminal-amber);
+    display:block;
+    margin-bottom:6px;
+  }
+  .step h4{
+    margin:0 0 6px;
+    font-family:var(--font-mono);
+    font-size:0.98rem;
+    color:var(--terminal-fg);
+  }
+  .step p{
+    margin:0;
+    font-size:0.88rem;
+    color:var(--terminal-dim);
+    line-height:1.5;
+  }
+  .step code{
+    font-family:var(--font-mono);
+    color:var(--terminal-amber);
+    background:none;
+  }
+
+  /* signature: live auth-check demo */
+  .demo{
+    border:1px solid var(--terminal-line);
+    border-radius:6px;
+    background:color-mix(in srgb, var(--terminal-bg) 60%, white 3%);
+    padding:22px 24px 26px;
+  }
+  .demo-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .demo-head .demo-label{
+    font-family:var(--font-mono);
+    font-size:0.82rem;
+    color:var(--terminal-dim);
+  }
+  .demo-run{
+    font-family:var(--font-mono);
+    font-size:0.8rem;
+    background:none;
+    border:1px solid var(--terminal-amber);
+    color:var(--terminal-amber);
+    padding:7px 14px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .demo-run:hover{ background:color-mix(in srgb, var(--terminal-amber) 14%, transparent); }
+  .csv-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--font-mono);
+    font-size:0.86rem;
+  }
+  .csv-table th{
+    text-align:left;
+    color:var(--terminal-dim);
+    font-weight:500;
+    padding:6px 10px;
+    border-bottom:1px solid var(--terminal-line);
+    font-size:0.76rem;
+  }
+  .csv-table td{
+    padding:8px 10px;
+    border-bottom:1px solid var(--terminal-line);
+    color:var(--terminal-fg);
+    transition:background .35s ease, color .35s ease;
+  }
+  .csv-table tr.checked td{ background:color-mix(in srgb, var(--terminal-amber) 10%, transparent); }
+  .csv-table .result{ font-weight:600; }
+  .csv-table .result.match{ color:var(--ok); }
+  .csv-table .result.nomatch{ color:var(--no); }
+  .csv-table .result::before{ content:"…"; color:var(--terminal-dim); }
+  .csv-table tr.checked .result.match::before{ content:"✔"; color:var(--ok); }
+  .csv-table tr.checked .result.nomatch::before{ content:"✘"; color:var(--no); }
+
+  .demo-output{
+    margin-top:16px;
+    font-family:var(--font-mono);
+    font-size:0.86rem;
+    color:var(--terminal-dim);
+  }
+  .demo-output .line{ min-height:1.4em; }
+  .demo-output .line.on{ color:var(--terminal-amber); }
+
+  /* ============ FEATURES ============ */
+  .features{ padding:88px 0; border-top:1px solid var(--line); }
+  .feature-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:18px;
+  }
+  .feature-card{
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 20px;
+  }
+  .feature-icon{ font-size:1.4rem; margin-bottom:12px; display:block; }
+  .feature-card h3{
+    font-size:1rem;
+    margin:0 0 6px;
+    font-weight:600;
+  }
+  .feature-card p{
+    margin:0;
+    font-size:0.9rem;
+    color:var(--ink-soft);
+  }
+
+  /* ============ TECHNOLOGIES ============ */
+  .tech{ padding:0 0 88px; }
+  .tech-panel{
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:26px 28px;
+  }
+  .tech-panel .term-title-row{
+    font-family:var(--font-mono);
+    font-size:0.8rem;
+    color:var(--ink-soft);
+    margin-bottom:16px;
+    padding-bottom:12px;
+    border-bottom:1px dashed var(--line);
+  }
+  .tech-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    list-style:none;
+    margin:0;
+    padding:0;
+    font-family:var(--font-mono);
+  }
+  .tech-list li{
+    font-size:0.85rem;
+    padding:7px 13px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--ink);
+    background:var(--paper);
+  }
+  .tech-list li .ver{ color:var(--amber); }
+
+  /* ============ LOGIN CTA (stamp) ============ */
+  .cta-section{
+    padding:70px 0 100px;
+    display:flex;
+    justify-content:center;
+  }
+  .stamp{
+    border:2px solid var(--stamp);
+    border-radius:6px;
+    padding:40px 56px;
+    text-align:center;
+    transform:rotate(-1deg);
+    position:relative;
+    max-width:480px;
+  }
+  .stamp::before{
+    content:"CONFIDENTIAL";
+    position:absolute;
+    top:-11px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--paper);
+    color:var(--stamp);
+    font-family:var(--font-mono);
+    font-size:0.68rem;
+    letter-spacing:0.15em;
+    padding:0 10px;
+  }
+  .stamp h2{
+    font-size:1.5rem;
+    margin:6px 0 10px;
+    font-weight:800;
+  }
+  .stamp p{
+    color:var(--ink-soft);
+    margin:0 0 24px;
+    font-size:0.96rem;
+  }
+  .btn-stamp{
+    font-family:var(--font-mono);
+    font-weight:700;
+    background:var(--stamp);
+    color:var(--paper);
+    padding:13px 30px;
+    border-radius:4px;
+    text-decoration:none;
+    display:inline-block;
+    letter-spacing:0.02em;
+  }
+  .btn-stamp:hover{ opacity:0.88; }
+
+  /* ============ FOOTER ============ */
+  footer{
+    background:var(--terminal-bg);
+    color:var(--terminal-dim);
+    padding:44px 0 34px;
+    font-family:var(--font-mono);
+    font-size:0.84rem;
+  }
+  footer .foot-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:20px;
+    margin-bottom:22px;
+  }
+  footer .foot-brand{ color:var(--terminal-fg); font-weight:700; }
+  footer .foot-desc{ margin-top:6px; max-width:340px; line-height:1.6; }
+  footer a.foot-link{ color:var(--terminal-amber); text-decoration:none; }
+  footer a.foot-link:hover{ text-decoration:underline; }
+  footer .foot-bottom{
+    border-top:1px solid var(--terminal-line);
+    padding-top:18px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  /* ============ BACK TO TOP ============ */
+  .to-top{
+    position:fixed;
+    bottom:26px; right:26px;
+    width:42px; height:42px;
+    border-radius:50%;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    font-family:var(--font-mono);
+    cursor:pointer;
+    opacity:0;
+    pointer-events:none;
+    transform:translateY(10px);
+    transition:opacity .3s ease, transform .3s ease;
+    z-index:90;
+  }
+  .to-top.show{ opacity:1; pointer-events:auto; transform:none; }
+  html[data-theme="dark"] .to-top{ background:var(--terminal-amber); color:var(--terminal-bg); }
+
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 760px){
+    nav.links{
+      position:fixed;
+      top:60px; left:0; right:0;
+      background:var(--paper);
+      border-bottom:1px solid var(--line);
+      flex-direction:column;
+      align-items:flex-start;
+      padding:18px 28px 24px;
+      gap:16px;
+      display:none;
+    }
+    nav.links.open{ display:flex; }
+    .hamburger{ display:flex; }
+    .term-row{ grid-template-columns:1fr; }
+    .hero{ padding-top:130px; }
+    .demo-head{ flex-direction:column; align-items:flex-start; }
+  }
+</style>
 </head>
 <body>
-  <h1>welcome to your private note</h1>
+
+<header>
+  <div class="nav-inner">
+    <div class="logo">private-notes<span class="cursor"></span></div>
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="links" id="navLinks">
+      <a href="#home" class="nav-link">Home</a>
+      <a href="#example" class="nav-link">Example</a>
+      <a href="#how-it-works" class="nav-link">How it Works</a>
+      <a href="login.html" class="btn-login">Login</a>
+      <button class="theme-toggle" id="themeToggle" type="button">☾ dark</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-grid"></div>
+    <div class="wrap hero-inner">
+      <span class="eyebrow">cat README.md</span>
+      <h1>Keep your notes <span class="amber">private.</span></h1>
+      <p class="lede">A small CGI application that shows how server-side authentication keeps everyone's data separate — built with HTML, C, Apache, and plain CSV files. No database, no frameworks, just a login and a filter.</p>
+      <div class="hero-actions">
+        <a href="login.html" class="btn-primary">Log in →</a>
+        <a href="#how-it-works" class="link-ghost">See how it works ↓</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLE -->
+  <section class="example" id="example">
+    <div class="wrap reveal">
+      <span class="eyebrow">whoami</span>
+      <h2 class="section-title">What happens after you log in?</h2>
+      <p class="section-lede">Two people, two accounts, two completely separate lists. Here's what each one sees.</p>
+
+      <div class="term-row">
+        <div class="term">
+          <div class="term-bar">
+            <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+            <span class="term-title">raphael@private-notes</span>
+          </div>
+          <div class="term-body">
+            <div><span class="term-prompt">$</span> cat notes.txt</div>
+            <ul>
+              <li>Learn CGI</li>
+              <li>Buy milk</li>
+              <li>Read Linux book</li>
+            </ul>
+          </div>
+        </div>
+        <div class="term">
+          <div class="term-bar">
+            <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+            <span class="term-title">john@private-notes</span>
+          </div>
+          <div class="term-body">
+            <div><span class="term-prompt">$</span> cat notes.txt</div>
+            <ul>
+              <li>Finish homework</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <p class="example-note"><strong>Raphael</strong> cannot see John's notes. <strong>John</strong> cannot see Raphael's. Same app, same server, different logins.</p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how-it-works">
+    <div class="wrap reveal">
+      <span class="eyebrow">man authentication</span>
+      <h2 class="section-title">How it works</h2>
+      <p class="section-lede">Every note is stored with the ID of the person who wrote it. The server only ever shows you the rows that belong to you.</p>
+
+      <div class="flow" aria-hidden="true">
+        <div class="flow-node">Browser</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">Login form</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node hot">login.cgi</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">users.csv</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">Authentication</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">notes.csv</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node hot">Only matching notes are shown</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">STEP 1</span>
+          <h4>Enter credentials</h4>
+          <p>The visitor types a <code>username</code> and <code>password</code> into the login form.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">STEP 2</span>
+          <h4>Submit to the server</h4>
+          <p>The browser sends the form to <code>login.cgi</code>, a C program running on Apache.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">STEP 3</span>
+          <h4>Check the user</h4>
+          <p><code>login.cgi</code> opens <code>users.csv</code> and asks: does this user exist?</p>
+        </div>
+        <div class="step">
+          <span class="step-num">STEP 4</span>
+          <h4>Establish identity</h4>
+          <p>On success, the program remembers who's asking: <code>current_user = 1</code>.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">STEP 5</span>
+          <h4>Read every note</h4>
+          <p>The program opens <code>notes.csv</code> and reads every row in the file, one by one.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">STEP 6</span>
+          <h4>Filter and display</h4>
+          <p>Only rows where <code>user_id == current_user</code> are sent back to the browser.</p>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <span class="demo-label">$ ./login.cgi — matching notes.csv against current_user = 1</span>
+          <button class="demo-run" id="runDemo" type="button">▶ run auth check</button>
+        </div>
+        <table class="csv-table" id="csvTable">
+          <thead>
+            <tr><th>row</th><th>user_id</th><th>note</th><th>user_id == 1</th></tr>
+          </thead>
+          <tbody>
+            <tr data-user="1"><td>1</td><td>1</td><td>I love Linux.</td><td class="result match"></td></tr>
+            <tr data-user="2"><td>2</td><td>2</td><td>Apache</td><td class="result nomatch"></td></tr>
+            <tr data-user="1"><td>3</td><td>1</td><td>Learn CGI</td><td class="result match"></td></tr>
+            <tr data-user="3"><td>4</td><td>3</td><td>Shopping</td><td class="result nomatch"></td></tr>
+          </tbody>
+        </table>
+        <div class="demo-output">
+          <div class="line" id="outLine">Result: waiting to run…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="wrap reveal">
+      <span class="eyebrow">ls features/</span>
+      <h2 class="section-title">What the app does</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🔒</span>
+          <h3>Authentication</h3>
+          <p>Visitors must log in before they can see or write anything.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📝</span>
+          <h3>Notes</h3>
+          <p>Each person can create and keep their own personal notes.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">👁</span>
+          <h3>Privacy</h3>
+          <p>Only your notes are visible — never anyone else's.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📄</span>
+          <h3>CSV storage</h3>
+          <p>Everything lives in plain text files. No database required.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">⚙</span>
+          <h3>CGI</h3>
+          <p>Server-side C programs handle every request that touches data.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECHNOLOGIES -->
+  <section class="tech">
+    <div class="wrap reveal">
+      <div class="tech-panel">
+        <div class="term-title-row">$ cat requirements.txt</div>
+        <ul class="tech-list">
+          <li>HTML</li>
+          <li>CSS</li>
+          <li>JavaScript</li>
+          <li>Apache <span class="ver">httpd</span></li>
+          <li>CGI</li>
+          <li>C <span class="ver">lang</span></li>
+          <li>CSV storage</li>
+          <li>Linux</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGIN CTA -->
+  <section class="cta-section">
+    <div class="wrap" style="display:flex;justify-content:center;">
+      <div class="stamp reveal">
+        <h2>Ready to try it?</h2>
+        <p>Log in and see your notes — and only yours.</p>
+        <a href="login.html" class="btn-stamp">Log in</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <div class="foot-brand">private-notes</div>
+        <div class="foot-desc">An educational CGI project. Built with HTML, CSS, JavaScript, Apache, C, and CSV — to show how a server keeps one person's data away from another's.</div>
+      </div>
+      <div>
+        <a href="#" class="foot-link">GitHub →</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 private-notes</span>
+      <span>exit status 0</span>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top" type="button">↑</button>
+
+<script>
+(function(){
+  // ---- Mobile nav toggle ----
+  var hamburger = document.getElementById('hamburger');
+  var navLinks = document.getElementById('navLinks');
+  hamburger.addEventListener('click', function(){
+    var isOpen = navLinks.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  navLinks.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', function(){
+      navLinks.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // ---- Theme toggle (in-memory only) ----
+  var themeToggle = document.getElementById('themeToggle');
+  var root = document.documentElement;
+  themeToggle.addEventListener('click', function(){
+    var dark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    themeToggle.textContent = dark ? '☾ dark' : '☀ light';
+  });
+
+  // ---- Active nav link on scroll ----
+  var sections = ['home','example','how-it-works'].map(function(id){ return document.getElementById(id); });
+  var navAnchors = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var navObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var id = entry.target.id;
+        navAnchors.forEach(function(a){
+          a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  sections.forEach(function(s){ if(s) navObserver.observe(s); });
+
+  // ---- Reveal on scroll ----
+  var revealEls = document.querySelectorAll('.reveal');
+  var revealObserver = new IntersectionObserver(function(entries, obs){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('is-visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(function(el){ revealObserver.observe(el); });
+
+  // ---- Back to top ----
+  var toTop = document.getElementById('toTop');
+  window.addEventListener('scroll', function(){
+    toTop.classList.toggle('show', window.scrollY > 500);
+  });
+  toTop.addEventListener('click', function(){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ---- Signature demo: live auth-check animation ----
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#csvTable tbody tr'));
+  var outLine = document.getElementById('outLine');
+  var runBtn = document.getElementById('runDemo');
+  var demoEl = document.querySelector('.demo');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var running = false;
+
+  function resetDemo(){
+    rows.forEach(function(r){ r.classList.remove('checked'); });
+    outLine.textContent = 'Result: waiting to run…';
+    outLine.classList.remove('on');
+  }
+
+  function runDemo(){
+    if(running) return;
+    running = true;
+    resetDemo();
+    var delay = reduceMotion ? 0 : 500;
+    rows.forEach(function(row, i){
+      setTimeout(function(){
+        row.classList.add('checked');
+        if(i === rows.length - 1){
+          setTimeout(function(){
+            outLine.textContent = 'Result: showing rows 1 and 3 — "I love Linux." and "Learn CGI"';
+            outLine.classList.add('on');
+            running = false;
+          }, delay);
+        }
+      }, delay * (i + 1));
+    });
+  }
+
+  runBtn.addEventListener('click', runDemo);
+
+  var demoObserver = new IntersectionObserver(function(entries, obs){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        runDemo();
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+  if(demoEl) demoObserver.observe(demoEl);
+})();
+</script>
+
 </body>
 </html>
