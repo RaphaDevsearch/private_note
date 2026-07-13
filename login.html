@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Notes — Login</title>
+  <meta name="description" content="Simple login page styled to match the Private Notes UI." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --paper: #EDE7D6;
+      --paper-2: #E2D9C1;
+      --paper-3: #D8CDAE;
+      --ink: #221D13;
+      --ink-soft: #5B5540;
+      --line: #B9AC85;
+      --amber: #B96A1E;
+      --amber-strong: #96521A;
+      --stamp: #9C3B2C;
+      --terminal-bg: #17140D;
+      --terminal-fg: #EDE3C6;
+      --terminal-dim: #9C9376;
+      --terminal-amber: #E7A23C;
+      --terminal-line: #38311F;
+      --radius: 3px;
+      --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+      --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html[data-theme="dark"] {
+      --paper: #15130C;
+      --paper-2: #1C1810;
+      --paper-3: #241F14;
+      --ink: #EDE3C6;
+      --ink-soft: #B3A987;
+      --line: #3A331F;
+      --amber: #E7A23C;
+      --amber-strong: #F0B563;
+      --stamp: #D2705B;
+      --terminal-bg: #0E0C08;
+      --terminal-fg: #EDE3C6;
+      --terminal-dim: #8A8264;
+      --terminal-amber: #E7A23C;
+      --terminal-line: #2A2415;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .page {
+      width: min(100%, 440px);
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: color-mix(in srgb, var(--paper) 75%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .brand::before {
+      content: "$ ";
+      color: var(--amber);
+    }
+
+    .theme-toggle {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .card {
+      padding: 28px 24px 24px;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      color: var(--amber);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .eyebrow::before { content: "$"; color: var(--ink-soft); }
+
+    h1 {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    input:focus {
+      outline: 2px solid color-mix(in srgb, var(--amber) 24%, transparent);
+      border-color: var(--amber);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+    }
+
+    .row a {
+      color: var(--amber);
+      text-decoration: none;
+    }
+
+    button {
+      font-family: var(--font-mono);
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .footer {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+    }
+
+    .footer a {
+      color: var(--amber);
+      text-decoration: none;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 22px 18px 20px; }
+      .topbar { padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topbar">
+      <div class="brand">private_note</div>
+      <button class="theme-toggle" type="button" onclick="toggleTheme()">toggle theme</button>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">secure sign in</div>
+      <h1>Welcome back</h1>
+      <p>Access your private notes with the same simple, focused experience as the rest of the app.</p>
+
+      <form>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="••••••••" />
+
+        <div class="row">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" />
+            Remember me
+          </label>
+          <a href="#">Forgot password?</a>
+        </div>
+
+        <button type="submit">Sign in</button>
+      </form>
+
+      <div class="footer">
+        New here? <a href="index.html">Back to home</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+    }
+  </script>
+</body>
+</html>
