@@ -10,26 +10,38 @@
 /* ---------- Constants ---------- */
 
 #define MAX_LINE       1024
-#define MAX_ID         50
+#define MAX_ID         20
+#define MAX_USERNAME   50
 #define MAX_PASSWORD   50
+#define MAX_NAME       100
 #define MAX_NOTE       500
 
 /* ---------- Structures ---------- */
 
-typedef struct User
+typedef struct
 {
   char id[MAX_ID];
+  char username[MAX_USERNAME];
   char password[MAX_PASSWORD];
+  char name[MAX_NAME];
 
 } User;
 
-typedef struct Note
+typedef struct
 {
-    int id;
-    char user_id[MAX_ID];
-    char note[MAX_NOTE];
+  char id[MAX_ID];
+  char user_id[MAX_ID];
+  char note[MAX_NOTE];
 
 } Note;
+
+/* ---------- Arrays ---------- */
+
+extern User users[];
+extern int users_count;
+
+extern Note notes[];
+extern int notes_count;
 
 /* ---------- HTML ---------- */
 
