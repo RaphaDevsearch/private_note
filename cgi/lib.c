@@ -110,3 +110,54 @@ void print_request_info()
 
     printf("<hr>");
 }
+
+void read_post_data(char buffer[], int length)
+{
+  fread(buffer, 1, length, stdin);
+
+  buffer[length] = '\0';
+}
+
+
+int get_content_length()
+{
+  char *length = getenv("CONTENT_LENGTH");
+
+  if (length == NULL)
+    return 0;
+
+  return atoi(length);
+} 
+
+void print_post_data(char buffer[])
+{
+    printf("<h2>POST Data</h2>");
+
+    printf("%s", buffer);
+
+    printf("<hr>");
+}
+
+void understanding(void)
+{
+  html_header();
+
+  printf("<html>");
+  printf("<head>");
+  printf("<title>Private Notes</title>");
+  printf("</head>");
+
+  printf("<body>");
+
+  print_request_info();
+  int content_length = get_content_length();
+  char buffer[MAX_LINE];
+  read_post_data(buffer, content_length);
+
+  print_post_data(buffer);
+
+  printf("</body>");
+  printf("</html>");
+
+  html_footer();
+}

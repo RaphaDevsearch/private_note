@@ -67,5 +67,9 @@ void view_notes(const char *user_id);
  * understand how web work
  */
 void print_request_info(void);
+void read_post_data(char *buffer, int size);
+int get_content_length(void);
+void print_post_data(char *buffer);
+void understanding(void);
 
 #endif
