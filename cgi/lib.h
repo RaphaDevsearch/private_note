@@ -25,7 +25,7 @@
 typedef struct
 {
   char id[MAX_ID];
-  char username[MAX_USERNAME];
+  char user_id[MAX_USERNAME];
   char password[MAX_PASSWORD];
   char name[MAX_NAME];
 
@@ -63,11 +63,11 @@ void extract_field(const char *data, const char *field_name, char *result);
 
 /* ---------- Authentication ---------- */
 
-int authenticate(const char *username, const char *password);
+int authenticate(const char *user_id, const char *password);
 
-/* NEW — after authenticate() confirms the username/password, main() still
-   needs the user's internal id (e.g. "u001") to tag/filter notes with. */
-const char *find_user_id(const char *username);
+/* After authentication confirms the user_id/password, main() still needs the
+   user's internal id (e.g. "u001") to tag/filter notes with. */
+const char *find_user_id(const char *user_id);
 
 /* ---------- Notes ---------- */
 

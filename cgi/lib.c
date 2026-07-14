@@ -4,9 +4,9 @@
 
 User users[MAX_USERS] =
 {
-  {"u001", "raphael", "1234", "Raphael"},
-  {"u002", "john",    "abcd", "John"},
-  {"u003", "mary",    "pass", "Mary"}
+  {"u001", "24ug1234", "1234", "Raphael"},
+  {"u002", "25jh5678", "abcd", "John"},
+  {"u003", "26ma9012", "pass", "Mary"}
 };
 
 int users_count = 3;
@@ -147,11 +147,11 @@ void extract_field(const char *data, const char *field_name, char *result)
    Looks through the users[] array for a username + password
    that both match. Returns 1 if found, 0 otherwise.
 */
-int authenticate(const char *username, const char *password)
+int authenticate(const char *user_id, const char *password)
 {
   for (int i = 0; i < users_count; i++)
   {
-    if (strcmp(users[i].username, username) == 0 &&
+    if (strcmp(users[i].user_id, user_id) == 0 &&
         strcmp(users[i].password, password) == 0)
     {
       return 1; /* match found */
@@ -166,11 +166,11 @@ int authenticate(const char *username, const char *password)
    id (like "u001") to tag and filter notes with — the note
    struct links to users by id, not by username.
 */
-const char *find_user_id(const char *username)
+const char *find_user_id(const char *user_id)
 {
   for (int i = 0; i < users_count; i++)
   {
-    if (strcmp(users[i].username, username) == 0)
+    if (strcmp(users[i].user_id, user_id) == 0)
     {
       return users[i].id;
     }

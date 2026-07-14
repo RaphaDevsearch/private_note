@@ -4,7 +4,7 @@ int main(void)
 {
   char raw[MAX_LINE];
   char decoded[MAX_LINE];
-  char username[MAX_USERNAME];
+  char user_id[MAX_USERNAME];
   char password[MAX_PASSWORD];
   char note[MAX_NOTE];
   char action[20];
@@ -16,24 +16,19 @@ int main(void)
   get_post_data(raw, MAX_LINE);
   url_decode(raw, decoded);
 
-  extract_field(decoded, "username", username);
-  if (username[0] == '\0')
-  {
-    extract_field(decoded, "user_id", username);
-  }
-
+  extract_field(decoded, "user_id", user_id);
   extract_field(decoded, "password", password);
   extract_field(decoded, "note",     note);
   extract_field(decoded, "action",   action);
 
-  if (!authenticate(username, password))
+  if (!authenticate(user_id, password))
   {
-    printf("<p>Login failed. Check your username and password.</p>");
+    printf("<p>Login failed. Check your user ID and password.</p>");
     html_footer();
     return 0;
   }
 
-  const char *internal_id = find_user_id(username);
+  const char *internal_id = find_user_id(user_id);
 
   if (strcmp(action, "add") == 0)
   {
