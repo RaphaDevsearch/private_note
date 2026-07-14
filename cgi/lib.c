@@ -147,11 +147,11 @@ void extract_field(const char *data, const char *field_name, char *result)
    Looks through the users[] array for a username + password
    that both match. Returns 1 if found, 0 otherwise.
 */
-int authenticate(const char *user_id, const char *password)
+int authenticate(const char *username, const char *password)
 {
   for (int i = 0; i < users_count; i++)
   {
-    if (strcmp(users[i].id, user_id) == 0 &&
+    if (strcmp(users[i].username, username) == 0 &&
         strcmp(users[i].password, password) == 0)
     {
       return 1; /* match found */
