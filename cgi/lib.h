@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /* ---------- Constants ---------- */
 
@@ -15,6 +16,9 @@
 #define MAX_PASSWORD   50
 #define MAX_NAME       100
 #define MAX_NOTE       500
+
+#define MAX_USERS      50   /* room to grow the users[] array later */
+#define MAX_NOTES      100  /* room to grow the notes[] array later */
 
 /* ---------- Structures ---------- */
 
@@ -37,10 +41,10 @@ typedef struct
 
 /* ---------- Arrays ---------- */
 
-extern User users[];
+extern User users[MAX_USERS];
 extern int users_count;
 
-extern Note notes[];
+extern Note notes[MAX_NOTES];
 extern int notes_count;
 
 /* ---------- HTML ---------- */
@@ -53,9 +57,17 @@ void html_footer(void);
 void get_post_data(char *buffer, int size);
 void url_decode(char *src, char *dest);
 
+/* NEW — needed so main() can pull "username", "password", "note", "action"
+   out of the one big decoded string. Belongs in the Form section. */
+void extract_field(const char *data, const char *field_name, char *result);
+
 /* ---------- Authentication ---------- */
 
-int authenticate(const char *id, const char *password);
+int authenticate(const char *username, const char *password);
+
+/* NEW — after authenticate() confirms the username/password, main() still
+   needs the user's internal id (e.g. "u001") to tag/filter notes with. */
+const char *find_user_id(const char *username);
 
 /* ---------- Notes ---------- */
 
