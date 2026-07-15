@@ -74,7 +74,7 @@ int display_notes_by_user(
 
 int main(void)
 {
-  const char *target_user_id = "u003";
+  const char *target_user_id = "u001";
 
   printf("=================================\n");
   printf("Private Notes\n");
@@ -96,6 +96,6 @@ int main(void)
   {
     printf("Total Notes : %d\n", total);
   }
-  
+
   return 0;
 }
