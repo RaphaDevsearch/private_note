@@ -17,10 +17,15 @@ Note notes[MAX_NOTES] =
   {"n002", "u002", "Apache is powerful."},
   {"n003", "u001", "Today I learned CGI."},
   {"n004", "u003", "Buy some books."},
-  {"n005", "u001", "Finish my project."}
+  {"n005", "u001", "Finish my project."},
+  {"n006", "u001", "I need to buy milk."},
+  {"n007", "u001", "I like manjaro."},
+  {"n008", "u001", "I did coding."},
+  {"n009", "u001", "I need to buy groceries."},
+  {"n010", "u001", "I love programming."}
 };
 
-int notes_count = 5;
+int notes_count = 10;
 
 /* ---------- HTML ---------- */
 
