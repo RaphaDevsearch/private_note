@@ -218,29 +218,77 @@ int add_note(const char *user_id, const char *note)
    Prints only the notes whose user_id matches — this is the
    actual security boundary: one user never sees another's notes.
 */
+
 void view_notes(const char *user_id)
 {
   int found_any = 0;
-
-  printf("<h2>Your notes</h2><ul>");
-
+  int shown = 0;
+ 
+  printf(
+    "<meta charset=\"UTF-8\">"
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+    "<style>"
+    ":root{--paper:#EDE7D6;--paper-2:#E2D9C1;--ink:#221D13;--ink-soft:#5B5540;"
+    "--line:#B9AC85;--amber:#B96A1E;}"
+    "@media (prefers-color-scheme: dark){:root{--paper:#15130C;--paper-2:#1C1810;"
+    "--ink:#EDE3C6;--ink-soft:#B3A987;--line:#3A331F;--amber:#E7A23C;}}"
+    "*{box-sizing:border-box;}"
+    "html{-webkit-text-size-adjust:100%%;text-size-adjust:100%%;}"
+    "body{background:var(--paper);color:var(--ink);"
+    "font-family:'IBM Plex Sans',-apple-system,sans-serif;margin:0;"
+    "padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));}"
+    ".notes-wrap{max-width:480px;width:100%%;margin:0 auto;}"
+    ".notes-title{font-family:'JetBrains Mono',monospace;"
+    "font-size:clamp(0.8rem,3.5vw,0.85rem);"
+    "letter-spacing:0.02em;color:var(--ink);border-bottom:1px solid var(--line);"
+    "padding-bottom:10px;margin-bottom:16px;}"
+    ".notes-title span{color:var(--amber);}"
+    ".note-card{background:var(--paper-2);border:1px solid var(--line);"
+    "border-left:3px solid var(--amber);border-radius:3px;padding:12px 14px;"
+    "margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;}"
+    ".note-index{font-family:'JetBrains Mono',monospace;color:var(--amber);"
+    "font-size:0.78rem;flex-shrink:0;padding-top:2px;}"
+    ".note-text{font-size:clamp(0.95rem,3.8vw,1rem);color:var(--ink);"
+    "line-height:1.5;word-break:break-word;overflow-wrap:anywhere;"
+    "min-width:0;flex:1;}"
+    ".empty-state{color:var(--ink-soft);font-size:0.9rem;padding:14px 0;}"
+    "@media (max-width:480px){"
+    "body{padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}"
+    ".note-card{padding:12px;}"
+    "}"
+    "@media (max-width:360px){"
+    "body{padding:12px;}"
+    ".note-card{padding:10px;gap:6px;}"
+    "}"
+    "</style>"
+  );
+ 
+  printf("<div class=\"notes-wrap\">");
+  printf("<div class=\"notes-title\"><span>$</span> your notes</div>");
+ 
   for (int i = 0; i < notes_count; i++)
   {
     if (strcmp(notes[i].user_id, user_id) == 0)
     {
-      printf("<li>%s</li>", notes[i].note);
+      shown++;
+      printf(
+        "<div class=\"note-card\">"
+        "<span class=\"note-index\">[%02d]</span>"
+        "<span class=\"note-text\">%s</span>"
+        "</div>",
+        shown, notes[i].note
+      );
       found_any = 1;
     }
   }
-
-  printf("</ul>");
-
+ 
   if (!found_any)
   {
-    printf("<p>No notes yet.</p>");
+    printf("<div class=\"empty-state\">no notes yet — add your first one above.</div>");
   }
+ 
+  printf("</div>");
 }
-
 /* ---------- "understand how web works" — separate learning helpers ---------- */
 
 void print_request_info(void)
