@@ -41,11 +41,11 @@ typedef struct
 
 /* ---------- Arrays ---------- */
 
-extern User users[MAX_USERS];
-extern int users_count;
+// extern User users[MAX_USERS];
+// extern int users_count;
 
-extern Note notes[MAX_NOTES];
-extern int notes_count;
+// extern Note notes[MAX_NOTES];
+// extern int notes_count;
 
 /* ---------- HTML ---------- */
 

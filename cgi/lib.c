@@ -219,6 +219,7 @@ int add_note(const char *user_id, const char *note)
    actual security boundary: one user never sees another's notes.
 */
 
+
 void view_notes(const char *user_id)
 {
   int found_any = 0;
@@ -238,11 +239,18 @@ void view_notes(const char *user_id)
     "font-family:'IBM Plex Sans',-apple-system,sans-serif;margin:0;"
     "padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));}"
     ".notes-wrap{max-width:480px;width:100%%;margin:0 auto;}"
+    ".topbar{display:flex;align-items:center;justify-content:space-between;"
+    "padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:16px;}"
+    ".brand{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.95rem;"
+    "color:var(--ink);}"
+    ".brand span{color:var(--amber);}"
+    ".logout-btn{font-family:'JetBrains Mono',monospace;font-size:0.78rem;"
+    "background:transparent;border:1px solid var(--line);color:var(--ink-soft);"
+    "padding:6px 10px;border-radius:3px;cursor:pointer;text-decoration:none;}"
+    ".logout-btn:hover{border-color:var(--amber);color:var(--amber);}"
     ".notes-title{font-family:'JetBrains Mono',monospace;"
-    "font-size:clamp(0.8rem,3.5vw,0.85rem);"
-    "letter-spacing:0.02em;color:var(--ink);border-bottom:1px solid var(--line);"
-    "padding-bottom:10px;margin-bottom:16px;}"
-    ".notes-title span{color:var(--amber);}"
+    "font-size:clamp(0.8rem,3.5vw,0.85rem);color:var(--ink-soft);margin-bottom:16px;}"
+    ".notes-title b{color:var(--ink);font-weight:600;}"
     ".note-card{background:var(--paper-2);border:1px solid var(--line);"
     "border-left:3px solid var(--amber);border-radius:3px;padding:12px 14px;"
     "margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;}"
@@ -251,7 +259,8 @@ void view_notes(const char *user_id)
     ".note-text{font-size:clamp(0.95rem,3.8vw,1rem);color:var(--ink);"
     "line-height:1.5;word-break:break-word;overflow-wrap:anywhere;"
     "min-width:0;flex:1;}"
-    ".empty-state{color:var(--ink-soft);font-size:0.9rem;padding:14px 0;}"
+    ".empty-state{color:var(--ink-soft);font-size:0.9rem;padding:24px 0;"
+    "text-align:center;border:1px dashed var(--line);border-radius:3px;}"
     "@media (max-width:480px){"
     "body{padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}"
     ".note-card{padding:12px;}"
@@ -264,7 +273,25 @@ void view_notes(const char *user_id)
   );
  
   printf("<div class=\"notes-wrap\">");
-  printf("<div class=\"notes-title\"><span>$</span> your notes</div>");
+ 
+  printf(
+    "<div class=\"topbar\">"
+    "<div class=\"brand\"><span>$</span> private_note</div>"
+    "<a class=\"logout-btn\" href=\"../index.html\">log out</a>"
+    "</div>"
+  );
+ 
+  for (int i = 0; i < notes_count; i++)
+  {
+    if (strcmp(notes[i].user_id, user_id) == 0)
+    {
+      shown++;
+    }
+  }
+  printf("<div class=\"notes-title\"><b>%d</b> note%s</div>",
+         shown, shown == 1 ? "" : "s");
+ 
+  shown = 0; /* reset — this counter now drives the badge numbers below */
  
   for (int i = 0; i < notes_count; i++)
   {
@@ -289,6 +316,9 @@ void view_notes(const char *user_id)
  
   printf("</div>");
 }
+ 
+
+
 /* ---------- "understand how web works" — separate learning helpers ---------- */
 
 void print_request_info(void)
